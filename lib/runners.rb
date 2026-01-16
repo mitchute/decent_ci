@@ -13,6 +13,7 @@ module Runners
       out_this_cmd, err_this_cmd, result_this_command = run_single_script(this_config, cmd, env)
 
       $logger.error("Error running script command: #{cmd}") unless result_this_command.exitstatus.zero?
+      $logger.error("#{err_this_cmd}")
 
       all_out += out_this_cmd
       all_err += err_this_cmd
