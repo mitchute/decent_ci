@@ -58,13 +58,13 @@ opts = OptionParser.new do |opts|
   opts.on("--aws-access-key-id=[key]") do |k|
     ENV["AWS_ACCESS_KEY_ID"] = k
     options[:aws_access_key_id] = k
-    $logger.debug "aws-access-key-id: #{options[:aws_access_key_id]}"
+    # $logger.debug "aws-access-key-id: #{options[:aws_access_key_id]}"
   end
 
   opts.on("--aws-secret-access-key=[secret]") do |k|
     ENV["AWS_SECRET_ACCESS_KEY"] = k
     options[:aws_secret_access_key] = k
-    $logger.debug "aws-secret-access-key: #{options[:aws_secret_access_key]}"
+    # $logger.debug "aws-secret-access-key: #{options[:aws_secret_access_key]}"
   end
 
   opts.on("--delay-after-run=N", Integer, "Time to delay after execution has completed, in seconds. Defaults to 300") do |k|
