@@ -191,7 +191,7 @@ did_any_builds = false
     b.results_repositories.each {|repo, results_repo, results_path|
       $logger.info "Checking daily task status for #{repo} #{results_repo} #{results_path}"
 
-      if (test_mode || b.needs_daily_task(results_repo, results_path)) && ENV["DECENT_CI_SKIP_DAILY_TASKS"].nil?
+      if (b.needs_daily_task(results_repo, results_path)) && ENV["DECENT_CI_SKIP_DAILY_TASKS"].nil?
         did_daily_task = true
 
         count = 0
