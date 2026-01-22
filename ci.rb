@@ -36,7 +36,7 @@ $logger.formatter = proc { |severity, datetime, program_name, msg|
 }
 
 $logger.info "#{__FILE__} starting"
-$logger.debug "#{__FILE__} starting, ARGV: #{ARGV}"
+# $logger.debug "#{__FILE__} starting, ARGV: #{ARGV}"
 $logger.debug "Logging to decent_ci.log"
 
 options = {}
@@ -116,7 +116,7 @@ ENV.sort.each { |k,v|
   env_dump += "#{k}=#{v}; "
 }
 
-$logger.info "Environment: #{env_dump}"
+# $logger.info "Environment: #{env_dump}"
 
 # keep this after the above environment dump so the key isn't included there
 ENV["GITHUB_TOKEN"] = ARGV[1]
@@ -174,7 +174,7 @@ end
 did_any_builds = false
 
 (2..ARGV.length - 1).each {|conf|
-  $logger.info "Loading configuration #{ARGV[conf]}"
+  # $logger.info "Loading configuration #{ARGV[conf]}"
   $current_log_repository = ARGV[conf]
 
   begin
