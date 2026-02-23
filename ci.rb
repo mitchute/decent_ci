@@ -36,7 +36,7 @@ $logger.formatter = proc { |severity, datetime, program_name, msg|
 }
 
 $logger.info "#{__FILE__} starting"
-$logger.debug "#{__FILE__} starting, ARGV: #{ARGV}"
+# $logger.debug "#{__FILE__} starting, ARGV: #{ARGV}"
 $logger.debug "Logging to decent_ci.log"
 
 options = {}
@@ -58,13 +58,13 @@ opts = OptionParser.new do |opts|
   opts.on("--aws-access-key-id=[key]") do |k|
     ENV["AWS_ACCESS_KEY_ID"] = k
     options[:aws_access_key_id] = k
-    $logger.debug "aws-access-key-id: #{options[:aws_access_key_id]}"
+    # $logger.debug "aws-access-key-id: #{options[:aws_access_key_id]}"
   end
 
   opts.on("--aws-secret-access-key=[secret]") do |k|
     ENV["AWS_SECRET_ACCESS_KEY"] = k
     options[:aws_secret_access_key] = k
-    $logger.debug "aws-secret-access-key: #{options[:aws_secret_access_key]}"
+    # $logger.debug "aws-secret-access-key: #{options[:aws_secret_access_key]}"
   end
 
   opts.on("--delay-after-run=N", Integer, "Time to delay after execution has completed, in seconds. Defaults to 300") do |k|
@@ -116,7 +116,7 @@ ENV.sort.each { |k,v|
   env_dump += "#{k}=#{v}; "
 }
 
-$logger.info "Environment: #{env_dump}"
+# $logger.info "Environment: #{env_dump}"
 
 # keep this after the above environment dump so the key isn't included there
 ENV["GITHUB_TOKEN"] = ARGV[1]
@@ -174,7 +174,7 @@ end
 did_any_builds = false
 
 (2..ARGV.length - 1).each {|conf|
-  $logger.info "Loading configuration #{ARGV[conf]}"
+  # $logger.info "Loading configuration #{ARGV[conf]}"
   $current_log_repository = ARGV[conf]
 
   begin
@@ -191,7 +191,7 @@ did_any_builds = false
     b.results_repositories.each {|repo, results_repo, results_path|
       $logger.info "Checking daily task status for #{repo} #{results_repo} #{results_path}"
 
-      if (test_mode || b.needs_daily_task(results_repo, results_path)) && ENV["DECENT_CI_SKIP_DAILY_TASKS"].nil?
+      if (b.needs_daily_task(results_repo, results_path)) && ENV["DECENT_CI_SKIP_DAILY_TASKS"].nil?
         did_daily_task = true
 
         count = 0

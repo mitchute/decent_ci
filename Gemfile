@@ -4,8 +4,9 @@ source 'http://rubygems.org'
 
 # git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
 
-gem 'activesupport'
+gem 'activesupport', '8.0.0'
 gem 'octokit'
+gem 'sorted_set'
 
 # there are some gems we use for testing the codebase -- not needed for actual use of the library
 group :test do
