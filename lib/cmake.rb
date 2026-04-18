@@ -17,10 +17,18 @@ end
 module CMake
   include Runners
 
+  def cmake_expand_path_flags(flags)
+    return '' if flags.nil?
+
+    flags.gsub(/(-D[^=\s]+:PATH=)~(?=\/)/) do
+      "#{Regexp.last_match(1)}#{Dir.home}"
+    end
+  end
+
   def cmake_build(compiler, src_dir, build_dir, regression_dir, regression_baseline, cmake_build_args)
     FileUtils.mkdir_p build_dir
 
-    cmake_flags = "#{compiler[:cmake_extra_flags]} -DDEVICE_ID:STRING=\"#{cmake_build_args.this_device_id}\""
+    cmake_flags = "#{cmake_expand_path_flags(compiler[:cmake_extra_flags])} -DDEVICE_ID:STRING=\"#{cmake_build_args.this_device_id}\""
 
     compiler_extra_flags = compiler[:compiler_extra_flags]
     compiler_extra_flags = '' if compiler_extra_flags.nil?

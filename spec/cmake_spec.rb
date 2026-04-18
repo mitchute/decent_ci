@@ -88,6 +88,28 @@ describe 'CMake Testing' do
       response = cmake_build(compiler,src_dir, build_dir, regression_dir, regression_baseline, args)
       expect(response).to be_truthy
     end
+    it 'should expand home directory prefixes in cmake PATH flags' do
+      observed_commands = []
+      allow_any_instance_of(Runners).to receive(:run_scripts) do |_, _, commands, _|
+        observed_commands.concat(commands)
+        ['stdoutmsg', 'stderrmsg', 0]
+      end
+      allow_any_instance_of(Octokit::Client).to receive(:content).and_return([CMakeSpecNamedDummy.new('.decent_ci.yaml')])
+      @client = Octokit::Client.new(:access_token => 'abc')
+      @config = load_configuration('spec/resources', 'abc', false)
+      compiler = @config.compilers.first
+      compiler[:cmake_extra_flags] = '-DPython_ROOT_DIR:PATH=~/.pyenv/versions/3.12.2/ -DSOME_FLAG:BOOL=ON'
+      src_dir = Dir.mktmpdir
+      build_dir = File.join(src_dir, 'build')
+      regression_dir = nil
+      regression_baseline = nil
+      @build_results = SortedSet.new
+      args = CMakeBuildArgs.new('Debug', 'thisDeviceIDHere', true)
+      response = cmake_build(compiler, src_dir, build_dir, regression_dir, regression_baseline, args)
+      expect(response).to be_truthy
+      expect(observed_commands.first).to include("-DPython_ROOT_DIR:PATH=#{Dir.home}/.pyenv/versions/3.12.2/")
+      expect(observed_commands.first).not_to include('-DPython_ROOT_DIR:PATH=~/.pyenv/versions/3.12.2/')
+    end
   end
   context 'when calling cmake_test' do
     it 'should run a simple set of tests' do
