@@ -28,14 +28,33 @@ def github_query(client, num_retries = 2)
   loop do
     begin
       return yield
-    rescue Octokit::TooManyRequests
+    rescue Octokit::TooManyRequests => e
       count += 1
 
       if count > num_retries
         $logger.error('Rate limit has been exceeded retries exhausted, re-throwing error')
         raise
       end
-      time_to_sleep = github_check_rate_limit(client.last_response.headers) + 3 # add a little buffer to the delay time
+
+      headers = nil
+
+      if e.respond_to?(:response_headers)
+        begin
+          headers = e.response_headers
+        rescue NoMethodError
+          headers = nil
+        end
+      end
+
+      headers ||= e.response.headers if e.respond_to?(:response) && !e.response.nil? && e.response.respond_to?(:headers)
+      headers ||= client.last_response.headers if !client.nil? && client.respond_to?(:last_response) && !client.last_response.nil? && client.last_response.respond_to?(:headers)
+
+      unless headers
+        $logger.error('Rate limit has been exceeded but response headers are unavailable, re-throwing original error')
+        raise
+      end
+
+      time_to_sleep = github_check_rate_limit(headers) + 3 # add a little buffer to the delay time
       $logger.info("Rate limit has been exceeded, rate limit will be reset in: #{time_to_sleep}s")
       $logger.info("Rate limit has been exceeded, sleeping for: #{time_to_sleep}s")
 

@@ -17,11 +17,14 @@ class DummyResponse
 end
 
 class DummyClient
-  def initialize
-    @counter = 0
-  end
   def last_response
-    return DummyResponse.new
+    DummyResponse.new
+  end
+end
+
+class NilResponseClient
+  def last_response
+    nil
   end
 end
 
@@ -38,6 +41,11 @@ describe 'GitHub Testing' do
     it 'should eventually fail if rate limit persists' do
       c = DummyClient.new
       expect{ github_query(c, 1) { dummy_function } }.to raise_error Octokit::TooManyRequests
+    end
+    it 'should re-raise the original rate limit error when headers are unavailable' do
+      c = NilResponseClient.new
+      allow(Kernel).to receive(:sleep)
+      expect { github_query(c, 1) { dummy_function } }.to raise_error Octokit::TooManyRequests
     end
   end
   context 'when calling github_check_rate_limit' do
