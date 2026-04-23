@@ -32,6 +32,10 @@ def dummy_function
   raise Octokit::TooManyRequests
 end
 
+def eof_function
+  raise EOFError, 'end of file reached'
+end
+
 describe 'GitHub Testing' do
   context 'when calling github_query' do
     it 'should yield whatever pass in for quick results' do
@@ -46,6 +50,23 @@ describe 'GitHub Testing' do
       c = NilResponseClient.new
       allow(Kernel).to receive(:sleep)
       expect { github_query(c, 1) { dummy_function } }.to raise_error Octokit::TooManyRequests
+    end
+    it 'should retry transient transport failures and eventually succeed' do
+      allow(Kernel).to receive(:sleep)
+      attempts = 0
+      response = github_query(nil, 2) do
+        attempts += 1
+        raise EOFError, 'end of file reached' if attempts == 1
+
+        :ok
+      end
+
+      expect(response).to eql :ok
+      expect(attempts).to eql 2
+    end
+    it 'should eventually fail if transient transport failures persist' do
+      allow(Kernel).to receive(:sleep)
+      expect { github_query(nil, 1) { eof_function } }.to raise_error EOFError
     end
   end
   context 'when calling github_check_rate_limit' do

@@ -1,5 +1,28 @@
 # frozen_string_literal: true
 
+require 'net/http'
+require 'socket'
+
+TRANSIENT_GITHUB_ERRORS = [
+  EOFError,
+  IOError,
+  Errno::ECONNRESET,
+  Errno::ECONNREFUSED,
+  Errno::ETIMEDOUT,
+  Net::OpenTimeout,
+  Net::ReadTimeout,
+  SocketError
+].freeze
+
+def transient_github_error?(error)
+  return true if TRANSIENT_GITHUB_ERRORS.any? { |klass| error.is_a?(klass) }
+
+  return true if defined?(Faraday::ConnectionFailed) && error.is_a?(Faraday::ConnectionFailed)
+  return true if defined?(Faraday::TimeoutError) && error.is_a?(Faraday::TimeoutError)
+
+  false
+end
+
 def github_check_rate_limit(headers)
   rate_limit = headers['x-ratelimit-limit'].to_i
   rate_limit_remaining = headers['x-ratelimit-remaining'].to_i
@@ -59,6 +82,19 @@ def github_query(client, num_retries = 2)
       $logger.info("Rate limit has been exceeded, sleeping for: #{time_to_sleep}s")
 
       sleep(time_to_sleep) if time_to_sleep.positive?
+    rescue => e
+      raise unless transient_github_error?(e)
+
+      count += 1
+
+      if count > num_retries
+        $logger.error("Transient GitHub error retries exhausted, re-throwing error: #{e.class}: #{e}")
+        raise
+      end
+
+      time_to_sleep = count**2
+      $logger.warn("Transient GitHub error #{e.class}: #{e}. Sleeping for #{time_to_sleep}s before retry #{count} of #{num_retries}")
+      sleep(time_to_sleep)
     end
   end
 end
