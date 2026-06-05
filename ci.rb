@@ -295,8 +295,7 @@ did_any_builds = false
                   $logger.info "Removing pre-existing baseline directory (#{regression_base.this_src_dir})"
                   FileUtils.rm_rf(regression_base.this_src_dir)
                 end
-                $logger.info "Beginning regression baseline (#{regression_base.descriptive_string}) build for #{compiler[:name]} - #{p.descriptive_string}"
-                regression_base.do_build compiler, nil
+                $logger.info "Beginning regression baseline (#{regression_base.descriptive_string}) build and test for #{compiler[:name]} - #{p.descriptive_string}"
                 regression_base.do_test compiler, nil
               end
 
