@@ -35,8 +35,17 @@ class Build
   end
 
   def query_branches
-    # TODO: properly handle paginated results from github
-    branches = github_query(@client) { @client.branches(@repository, :per_page => 100) }
+    branches = []
+    page = 1
+    loop do
+      page_branches = github_query(@client) { @client.branches(@repository, :per_page => 100, :page => page) }
+      break if page_branches.nil? || page_branches.empty?
+
+      branches.concat(page_branches)
+      break if page_branches.length < 100
+
+      page += 1
+    end
 
     branches.each do |b|
       if b.name.include?('#')

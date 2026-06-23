@@ -30,6 +30,24 @@ def count_files(client, results_repository, results_path)
   file_count
 end
 
+def github_query_all_pages(client)
+  items = []
+  page = 1
+  per_page = 100
+
+  loop do
+    page_items = github_query(client) { yield(per_page, page) }
+    break if page_items.nil? || page_items.empty?
+
+    items.concat(page_items)
+    break if page_items.length < per_page
+
+    page += 1
+  end
+
+  items
+end
+
 def clean_up(client, repository, results_repository, results_path, age_limit, limits)
   if $logger.nil?
     logger = Logger.new(STDOUT)
@@ -50,10 +68,9 @@ def clean_up(client, repository, results_repository, results_path, age_limit, li
     logger.info("Total file limits reached, long running branch names: '#{branches}', feature branch file limit: '#{feature_branch_limit}', long running branch file limit: '#{long_running_branch_limit}'")
   end
 
-  # todo properly handle paginated results from github
-  _branches = github_query(client) { client.branches(repository, :per_page => 200) }
-  _releases = github_query(client) { client.releases(repository, :per_page => 200) }
-  _pull_requests = github_query(client) { client.pull_requests(repository, :state=>"open", :per_page => 50) }
+  _branches = github_query_all_pages(client) { |per_page, page| client.branches(repository, :per_page => per_page, :page => page) }
+  _releases = github_query_all_pages(client) { |per_page, page| client.releases(repository, :per_page => per_page, :page => page) }
+  _pull_requests = github_query_all_pages(client) { |per_page, page| client.pull_requests(repository, :state=>"open", :per_page => per_page, :page => page) }
 
   clean_up_impl(client, repository, results_repository, results_path, age_limit,
                       limit_reached, branches, feature_branch_limit, long_running_branch_limit, _branches, _releases, _pull_requests)
@@ -247,4 +264,3 @@ def clean_up_impl(client, repository, results_repository, results_path, age_limi
 
   true
 end
-

@@ -155,6 +155,7 @@ end
 
 class DummyClient2
   attr_accessor :content_response
+  attr_accessor :my_branches
   def initialize
     t_base = Time.now
     t_base.utc
@@ -193,8 +194,13 @@ class DummyClient2
   def releases(repo_name)
     @my_releases
   end
-  def branches(repo_name, per_page)
-    @my_branches
+  def branches(repo_name, options)
+    return @my_branches unless options.is_a?(Hash)
+
+    per_page = options[:per_page] || @my_branches.length
+    page = options[:page] || 1
+    start = (page - 1) * per_page
+    @my_branches[start, per_page] || []
   end
   def branch(repo_name, branch_name)
     @my_branches.select { |b| b.name == branch_name }.first
@@ -260,6 +266,22 @@ describe 'Build Testing' do
       expect(b.client.branches('', 1).length).to eql 8 # this is the absolute total
       b.query_branches
       expect(b.potential_builds.length).to eql 3 # this is the number of expected valid ones
+    end
+
+    it 'should include active branches beyond the first github page' do
+      client = DummyClient2.new
+      t_base = Time.now
+      t_base.utc
+      t_too_old = t_base - 60*60*24*40
+      t_recent = t_base - 60*60*24*2
+      client.my_branches = (1..100).map { |i| DummyBranch.new(t_too_old, "old-#{i}", 'commit_message') }
+      client.my_branches << DummyBranch.new(t_recent, 'active-page-two-branch', 'commit_message')
+
+      allow(Octokit::Client).to receive(:new).and_return(client)
+      allow(PotentialBuild).to receive(:new).and_return(true)
+      b = Build.new('abcdef', 'spec/resources', 10)
+      b.query_branches
+      expect(b.potential_builds.length).to eql 1
     end
   end
   context 'when calling query_pull_requests' do
